@@ -60,33 +60,33 @@ Six classification models were implemented and evaluated:
 
 | ML Model Name | Accuracy | AUC | Precision | Recall | F1 | MCC |
 |---------------|----------|-----|-----------|--------|----|-----|
-| Logistic Regression | 0.8537 | 0.9261 | 0.8571 | 0.8571 | 0.8571 | 0.7073 |
-| Decision Tree | 0.9902 | 0.9905 | 0.9907 | 0.9907 | 0.9907 | 0.9805 |
-| KNN | 0.8732 | 0.9304 | 0.8692 | 0.8879 | 0.8785 | 0.7463 |
-| Naive Bayes | 0.8439 | 0.9073 | 0.8491 | 0.8411 | 0.8451 | 0.6874 |
+| Logistic Regression | 0.8098 | 0.9298 | 0.7619 | 0.9143 | 0.8312 | 0.6309 |
+| Decision Tree | 0.9854 | 0.9857 | 1.0000 | 0.9714 | 0.9855 | 0.9712 |
+| KNN | 0.8634 | 0.9629 | 0.8738 | 0.8571 | 0.8654 | 0.7269 |
+| Naive Bayes | 0.8293 | 0.9043 | 0.8070 | 0.8762 | 0.8402 | 0.6602 |
 | Random Forest (Ensemble) | 1.0000 | 1.0000 | 1.0000 | 1.0000 | 1.0000 | 1.0000 |
-| XGBoost (Ensemble) | 0.9902 | 0.9990 | 0.9907 | 0.9907 | 0.9907 | 0.9805 |
-
-> **Note:** The exact metric values above are representative. Your actual values may vary slightly depending on the random seed and data split. Please update this table with your actual results after running the training script.
+| XGBoost (Ensemble) | 1.0000 | 1.0000 | 1.0000 | 1.0000 | 1.0000 | 1.0000 |
 
 ---
 
-## 🔍 Model Observations
+## Observations on Model Performance
 
-| ML Model Name | Observation about Model Performance |
-|---------------|-------------------------------------|
-| **Logistic Regression** | Logistic Regression provides a solid baseline with ~85% accuracy. Being a linear model, it works reasonably well when the decision boundary between classes is approximately linear. However, it may underperform on this dataset because some feature relationships are non-linear. The AUC of ~0.93 indicates good discrimination ability despite moderate accuracy. |
-| **Decision Tree** | Decision Tree achieves very high accuracy (~99%), demonstrating strong ability to capture complex non-linear decision boundaries in the data. However, such high performance may indicate overfitting to the training data, especially without pruning or depth constraints. The model's interpretability is a key advantage for clinical applications. |
-| **KNN** | KNN achieves ~87% accuracy, performing better than Logistic Regression and Naive Bayes. Its performance is sensitive to the choice of k and the scaling of features (StandardScaler was used here). KNN struggles slightly because some features may have different scales of importance, and the curse of dimensionality can affect distance calculations with 13 features. |
-| **Naive Bayes** | Naive Bayes shows the lowest accuracy (~84%) among all models. This is expected because the "naive" conditional independence assumption is violated — many clinical features (e.g., age, cholesterol, blood pressure) are correlated. Despite this, its AUC (~0.91) suggests reasonable ranking ability, making it useful for probabilistic interpretation. |
-| **Random Forest (Ensemble)** | Random Forest achieves the best performance with near-perfect metrics. As an ensemble of multiple decision trees using bagging, it reduces the variance and overfitting issues seen in single decision trees. The aggregation of many diverse trees makes it robust and well-suited for this dataset with mixed feature types. It also provides feature importance rankings useful for clinical insight. |
-| **XGBoost (Ensemble)** | XGBoost achieves near-perfect accuracy (~99%) and the highest AUC (~0.999), making it one of the strongest models. As a gradient boosting method, it sequentially builds trees that correct the errors of previous ones. Its regularization parameters help prevent overfitting. XGBoost handles the mixed feature types and non-linear relationships in this dataset extremely well. |
+| ML Model Name | Observation |
+|---------------|-------------|
+| **Logistic Regression** | At around 81% accuracy, Logistic Regression acts as a reasonable starting point. Its precision is the lowest among all models (0.76), which means it tends to flag some healthy patients as diseased. On the other hand, its recall is quite strong (0.91), so it catches most actual disease cases — a useful trait in a medical screening context where missing a sick patient is more costly than a false alarm. The limitation comes from its linear nature; it draws a straight boundary between classes and cannot capture the more complex feature interactions present in clinical data. Still, its AUC of 0.93 shows it ranks patients fairly well overall. |
+| **Decision Tree** | The Decision Tree performs impressively at 98.54% accuracy with perfect precision — every patient it labels as diseased truly has the condition. It only misses a handful of actual cases (recall = 0.97). This strong result comes from its ability to split on multiple features in a hierarchical fashion, naturally capturing interactions like "older age + high cholesterol + chest pain type 3." That said, the near-perfect numbers are partly inflated by duplicate rows in the dataset, and without pruning, decision trees tend to memorize training data rather than generalize from it. |
+| **KNN** | KNN lands in the middle at 86.34% accuracy, with precision and recall fairly balanced around 0.86–0.87. Its AUC of 0.96 is actually quite competitive, suggesting it separates the two classes well even if its hard predictions aren't always right. KNN works by looking at a patient's 7 nearest neighbors in the feature space and taking a vote. The challenge with 13 features is that distances become less meaningful in higher dimensions — this is the well-known "curse of dimensionality." Proper feature scaling (applied via StandardScaler) helps but doesn't fully overcome this limitation. |
+| **Naive Bayes** | Naive Bayes comes in at 82.93%, making it the second-weakest performer. It assumes each feature contributes independently to the prediction — an assumption clearly violated here since features like age, blood pressure, cholesterol, and heart rate are medically correlated. This leads to a relatively low MCC of 0.66, indicating its predictions are less balanced across the two classes. However, for such a simple and fast algorithm, the AUC of 0.90 is respectable and shows it still captures the general direction of risk reasonably well. |
+| **Random Forest (Ensemble)** | Random Forest hits 100% on every metric. It aggregates predictions from 150 individually trained decision trees, each built on a random data subset with a random feature subset. This diversity among trees reduces variance and makes the ensemble far more robust than any single tree. The perfect score is noteworthy but should be interpreted cautiously — the Heart Disease dataset contains duplicate rows, and some test samples are likely near-identical to training ones. With truly unseen patient data, we would expect slightly lower (but still strong) performance. The key takeaway is the clear benefit of bagging-based ensembles over individual learners. |
+| **XGBoost (Ensemble)** | XGBoost matches Random Forest with perfect scores across the board. Unlike Random Forest's parallel tree-building approach, XGBoost constructs trees one at a time — each new tree specifically targets the mistakes of the previous ones. This sequential error-correction, combined with built-in L1/L2 regularization, makes it one of the most effective algorithms for tabular data. As with Random Forest, the 100% metrics are partly a consequence of dataset duplicates rather than pure generalization ability. In a production clinical setting, XGBoost would likely still be among the top performers but with slightly more realistic accuracy numbers. |
 
-### Key Takeaways
-- **Ensemble methods (Random Forest and XGBoost)** clearly outperform individual models, demonstrating the power of combining multiple learners.
-- **Logistic Regression and Naive Bayes** serve as reasonable baselines but are limited by their assumptions (linearity and feature independence, respectively).
-- **KNN** performs moderately well but is sensitive to feature scaling and dimensionality.
-- **Decision Tree** shows strong performance but may overfit without proper regularization.
+### Summary
+- The two ensemble methods — Random Forest and XGBoost — clearly dominate, highlighting how combining multiple models leads to better predictions than any single algorithm.
+- Decision Tree comes close to the ensembles, but standalone trees risk overfitting without careful tuning.
+- KNN offers decent middle-ground results, though its effectiveness diminishes as feature count grows.
+- Logistic Regression provides a solid baseline with excellent recall, making it suitable for initial screening despite its linear constraints.
+- Naive Bayes ranks last, held back by its independence assumption which doesn't hold for correlated clinical measurements.
+- It's worth noting that the perfect ensemble scores are partly explained by duplicate records in the dataset. Deduplicating the data before splitting would yield more conservative and realistic performance numbers.
 
 ---
 
@@ -114,8 +114,8 @@ The deployed Streamlit application includes:
 
 1. **Clone the repository:**
    ```bash
-   git clone https://github.com/YOUR_USERNAME/YOUR_REPO_NAME.git
-   cd YOUR_REPO_NAME
+   git clone https://github.com/pradeep-kodavoor/Heart-Disease-Classification.git
+   cd Heart-Disease-Classification
    ```
 
 2. **Install dependencies:**
@@ -147,7 +147,7 @@ The deployed Streamlit application includes:
 ## 📂 Project Structure
 
 ```
-heart-disease-classifier/
+Heart-Disease-Classification/
 │── app.py                    # Streamlit web application
 │── requirements.txt          # Python dependencies
 │── README.md                 # This file
@@ -172,8 +172,8 @@ heart-disease-classifier/
 
 ## 🔗 Links
 
-- **GitHub Repository:** [Link to Repo](https://github.com/YOUR_USERNAME/YOUR_REPO_NAME)
-- **Live Streamlit App:** [Link to App](https://YOUR_APP_NAME.streamlit.app)
+- **GitHub Repository:** [Heart-Disease-Classification](https://github.com/pradeep-kodavoor/Heart-Disease-Classification)
+- **Live Streamlit App:** [Heart-Disease-Classification-App](https://heart-disease-classification-app.streamlit.app)
 
 ---
 
